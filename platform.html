@@ -1,192 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Platform · Cast Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ICON CDN -->
+<!-- Lucide icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
+/* GLOBAL RESET */
+*, *::before, *::after { box-sizing: border-box; }
+
 /* DESIGN SYSTEM */
-:root {
-  --bg: #f5f5f7;
-  --bg-card: #ffffff;
-  --bg-soft: #fafafa;
-
-  --text: #111;
-  --text-sub: #555;
-
-  --border: #ddd;
-  --accent: #000;
-
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-
-  --shadow-md: 0 8px 20px rgba(0,0,0,0.08);
-
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
+:root{
+  --bg:#f5f5f7;
+  --card:#fff;
+  --soft:#fafafa;
+  --text:#111;
+  --muted:#666;
+  --accent:#000;
+  --border:#ddd;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --pill:999px;
+  --shadow:0 8px 20px rgba(0,0,0,0.06);
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
 }
 
-/* GLOBAL */
-body {
-  margin:0;
-  background:var(--bg);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  color:var(--text);
-  display:flex;
-  height:100vh;
-  overflow:hidden;
-}
+/* LAYOUT */
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
 
 /* SIDEBAR */
-.sidebar {
-  width:240px;
-  background:#fff;
+.sidebar{
+  width:260px;
+  background:var(--card);
   border-right:1px solid var(--border);
-  padding:var(--space-4) var(--space-3);
+  padding:var(--space-4);
   display:flex;
   flex-direction:column;
-  gap:var(--space-2);
+  gap:var(--space-3);
 }
+.logo{font-weight:700;font-size:1.15rem;margin-bottom:6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-md);cursor:pointer;font-weight:600;border:2px solid transparent;
+}
+.nav-item:hover{background:#f0f0f0}
+.nav-item.active{background:var(--soft);border-color:var(--accent)}
+.nav-icon{width:18px;height:18px}
 
-.logo {
-  font-weight:700;
-  font-size:1.2rem;
-  margin-bottom:var(--space-4);
-}
+/* MAIN */
+.main{flex:1;overflow:auto;padding:var(--space-4)}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-title{font-size:1.25rem;margin:0}
+.section-sub{margin:0;color:var(--muted);font-size:0.95rem}
 
-.nav-item {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:var(--radius-md);
-  cursor:pointer;
-  font-weight:600;
-  border:2px solid transparent;
-}
-
-.nav-item.active {
-  border-color:var(--accent);
-  background:var(--bg-soft);
-}
-
-.nav-item:hover {
-  background:#eee;
-}
-
-.nav-icon {
-  width:20px;
-  height:20px;
-}
-
-/* MAIN AREA */
-.main {
-  flex:1;
-  overflow:auto;
-  padding:var(--space-4);
-}
-
-.section-title {
-  font-size:1.3rem;
-  font-weight:700;
-  margin:0 0 var(--space-2);
-}
-
-.section-sub {
-  margin:0 0 var(--space-4);
-  font-size:0.9rem;
-  color:var(--text-sub);
-}
-
-/* CARDS */
-.card {
-  background:var(--bg-card);
-  border-radius:var(--radius-lg);
-  padding:var(--space-4);
-  border:1px solid var(--border);
-  box-shadow:var(--shadow-md);
-  margin-bottom:var(--space-4);
-}
-
-.card h2 {
-  margin:0 0 var(--space-2);
-  font-size:1rem;
-}
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius-lg);padding:var(--space-4);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:var(--space-4)}
 
 /* GRID */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:var(--space-4);
-}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-4)}
 
-/* LISTS */
-.list {
-  display:flex;
-  flex-direction:column;
-  gap:var(--space-2);
-}
-.list-item {
-  background:var(--bg-soft);
-  padding:var(--space-3);
-  border-radius:var(--radius-md);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.pill {
-  border:1px solid #000;
-  padding:2px 8px;
-  border-radius:var(--radius-pill);
-  font-size:0.75rem;
-}
+/* FORM */
+.field{margin-bottom:var(--space-3)}
+.field label{display:block;font-size:0.8rem;margin-bottom:6px;color:var(--muted)}
+.field input,.field textarea{width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid #ccc;font-size:0.95rem;background:#fff}
+.field textarea{min-height:90px;resize:vertical}
 
-/* CHAT */
-.chat-box {
-  display:flex;
-  gap:10px;
-  margin-top:var(--space-3);
-}
-.chat-box input {
-  flex:1;
-  padding:var(--space-2);
-  border-radius:var(--radius-md);
-  border:1px solid #ccc;
-}
-.chat-box button {
-  padding:10px 16px;
-  border-radius:var(--radius-pill);
-  border:2px solid var(--accent);
-  background:var(--accent);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--pill);background:var(--accent);color:#fff;border:2px solid var(--accent);cursor:pointer;font-weight:700}
+.btn.outline{background:#fff;color:#000}
+.btn:disabled{opacity:0.6;cursor:not-allowed}
+
+/* SPINNER */
+.spinner{width:16px;height:16px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.dark{border:3px solid rgba(0,0,0,0.15);border-top-color:#000}
 
 /* PAGE LOADER */
-.page-loader {
-  width:40px;
-  height:40px;
-  border:4px solid #ccc;
-  border-top-color:#000;
-  border-radius:50%;
-  animation:spin 0.8s linear infinite;
-  margin:40px auto;
-}
+.page-loader{width:40px;height:40px;border:4px solid #ccc;border-top-color:#000;border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
 
-@keyframes spin {
-  to { transform:rotate(360deg); }
-}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LISTS */
+.list{display:flex;flex-direction:column;gap:10px}
+.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.pill{padding:4px 8px;border-radius:999px;border:1px solid #000;font-size:0.8rem}
+
+/* CHAT */
+.chat-box{display:flex;gap:10px;margin-top:12px}
+.chat-box input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc}
+
+/* STATUS */
+.status{margin-top:8px;color:#0a7a2f;font-size:0.9rem;min-height:1em}
+.small{font-size:0.85rem;color:var(--muted)}
 </style>
 </head>
-
 <body>
 
 <!-- SIDEBAR -->
@@ -217,6 +128,8 @@ body {
     <i data-lucide="message-circle" class="nav-icon"></i> Chat
   </div>
 
+  <div style="flex:1"></div>
+
   <div class="nav-item" id="logoutBtn">
     <i data-lucide="log-out" class="nav-icon"></i> Sign out
   </div>
@@ -226,13 +139,17 @@ body {
 <div class="main" id="main"></div>
 
 <script type="module">
+/* ====== Firebase imports
+   Assumes ./firebase.js exports:
+   auth, db, onAuthStateChanged, signOut,
+   collection, addDoc, serverTimestamp,
+   doc, getDoc, onSnapshot, query, orderBy
+*/
 import {
   auth, db, onAuthStateChanged, signOut,
-  collection, addDoc, serverTimestamp
-} from "./firebase.js";
-import {
+  collection, addDoc, serverTimestamp,
   doc, getDoc, onSnapshot, query, orderBy
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+} from "./firebase.js";
 
 /* INIT ICONS */
 lucide.createIcons();
@@ -243,40 +160,47 @@ onAuthStateChanged(auth, async user => {
     window.location.href = "index";
     return;
   }
-
-  const roleDoc = await getDoc(doc(db, "users", user.uid));
-  if (!roleDoc.exists()) {
-    window.location.href = "index";
+  // Ensure user doc exists (optional)
+  const udoc = await getDoc(doc(db,"users",user.uid));
+  if (!udoc.exists()) {
+    await setDoc(doc(db,"users",user.uid), { email: user.email || "", role: "cast" });
   }
 });
 
-/* LOGOUT */
-logoutBtn.onclick = () => signOut(auth);
-
-/* NAVIGATION */
+/* NAV */
 const main = document.getElementById("main");
-const navItems = [...document.querySelectorAll(".nav-item[data-section]")];
+const navItems = Array.from(document.querySelectorAll(".nav-item[data-section]"));
+const logoutBtn = document.getElementById("logoutBtn");
 
-function setActive(section) {
-  navItems.forEach(i => i.classList.toggle("active", i.dataset.section === section));
+function setActive(section){
+  navItems.forEach(n => n.classList.toggle("active", n.dataset.section === section));
 }
 
 navItems.forEach(item => {
-  item.onclick = () => {
-    setActive(item.dataset.section);
-    loadSection(item.dataset.section);
-  };
+  item.addEventListener("click", () => {
+    const s = item.dataset.section;
+    setActive(s);
+    loadSection(s);
+  });
 });
+
+logoutBtn.addEventListener("click", () => signOut(auth));
+
+/* LOADER */
+function showLoader(){
+  main.innerHTML = `<div class="page-loader"></div>`;
+}
 
 /* INITIAL LOAD */
 loadSection("announcements");
 
-/* LOADER */
-function showLoader() {
-  main.innerHTML = `<div class="page-loader"></div>`;
+/* ESCAPE HTML helper */
+function escapeHtml(str){
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* SECTION HANDLER */
+/* MAIN SECTION LOADER */
 function loadSection(section) {
 
   /* -------------------------
@@ -287,20 +211,38 @@ function loadSection(section) {
 
     setTimeout(() => {
       main.innerHTML = `
-        <h1 class="section-title">Announcements</h1>
-        <p class="section-sub">Latest updates from the production team.</p>
-        <div class="card"><div id="annList" class="list"></div></div>
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Announcements</h2>
+            <p class="section-sub">Latest updates from the production team.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="annList" class="list"></div>
+        </div>
       `;
 
-      onSnapshot(query(collection(db,"announcements"),orderBy("createdAt","desc")), snap=>{
+      const annList = document.getElementById("annList");
+
+      onSnapshot(query(collection(db,"announcements"), orderBy("createdAt","desc")), snap => {
         annList.innerHTML = "";
-        snap.forEach(d=>{
+        snap.forEach(d => {
           const x = d.data();
-          annList.innerHTML += `<div class="list-item"><span>${x.title}</span></div>`;
+          const title = escapeHtml(x.title);
+          const msg = escapeHtml(x.message);
+          annList.innerHTML += `
+            <div class="list-item">
+              <div>
+                <strong>${title}</strong>
+                <div class="small">${msg}</div>
+              </div>
+            </div>
+          `;
         });
       });
 
-    }, 300);
+    }, 200);
 
     return;
   }
@@ -313,24 +255,45 @@ function loadSection(section) {
 
     setTimeout(() => {
       main.innerHTML = `
-        <h1 class="section-title">Rehearsals</h1>
-        <p class="section-sub">Your upcoming rehearsal schedule.</p>
-        <div class="card"><div id="schList" class="list"></div></div>
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Rehearsals</h2>
+            <p class="section-sub">Upcoming rehearsals (sorted by date).</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="schList" class="list"></div>
+        </div>
       `;
 
-      onSnapshot(query(collection(db,"schedule"),orderBy("date","asc")), snap=>{
+      const schList = document.getElementById("schList");
+
+      // Use sortTimestamp for reliable ordering
+      onSnapshot(query(collection(db,"schedule"), orderBy("sortTimestamp","asc")), snap => {
         schList.innerHTML = "";
-        snap.forEach(d=>{
+        snap.forEach(d => {
           const x = d.data();
+          const title = escapeHtml(x.title);
+          const date = escapeHtml(x.date);
+          const time = escapeHtml(x.time);
+          const who = escapeHtml(x.who);
+          const extra = escapeHtml(x.extra);
+
           schList.innerHTML += `
             <div class="list-item">
-              <span>${x.title}</span>
-              <span class="pill">${x.date}</span>
-            </div>`;
+              <div>
+                <strong>${title}</strong>
+                <div class="small">${date} • ${time} • ${who}</div>
+                ${extra ? `<div class="small">${extra}</div>` : ""}
+              </div>
+              <div class="pill">${date}</div>
+            </div>
+          `;
         });
       });
 
-    }, 300);
+    }, 200);
 
     return;
   }
@@ -343,24 +306,36 @@ function loadSection(section) {
 
     setTimeout(() => {
       main.innerHTML = `
-        <h1 class="section-title">Tracks</h1>
-        <p class="section-sub">Listen to rehearsal and performance tracks.</p>
-        <div class="card"><div id="trkList" class="list"></div></div>
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Tracks</h2>
+            <p class="section-sub">Audio tracks for rehearsals and performances.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="trkList" class="list"></div>
+        </div>
       `;
 
-      onSnapshot(collection(db,"tracks"), snap=>{
+      const trkList = document.getElementById("trkList");
+
+      onSnapshot(query(collection(db,"tracks"), orderBy("createdAt","desc")), snap => {
         trkList.innerHTML = "";
-        snap.forEach(d=>{
+        snap.forEach(d => {
           const x = d.data();
+          const title = escapeHtml(x.title);
+          const url = x.url || "";
           trkList.innerHTML += `
             <div class="list-item">
-              <span>${x.title}</span>
-              <a href="${x.url}" target="_blank" class="pill">Open</a>
-            </div>`;
+              <div><strong>${title}</strong></div>
+              <div><a href="${escapeHtml(url)}" target="_blank" class="pill">Open</a></div>
+            </div>
+          `;
         });
       });
 
-    }, 300);
+    }, 200);
 
     return;
   }
@@ -373,24 +348,36 @@ function loadSection(section) {
 
     setTimeout(() => {
       main.innerHTML = `
-        <h1 class="section-title">Videos</h1>
-        <p class="section-sub">Watch choreography and reference videos.</p>
-        <div class="card"><div id="vidList" class="list"></div></div>
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Videos</h2>
+            <p class="section-sub">Reference and choreography videos.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="vidList" class="list"></div>
+        </div>
       `;
 
-      onSnapshot(collection(db,"videos"), snap=>{
+      const vidList = document.getElementById("vidList");
+
+      onSnapshot(query(collection(db,"videos"), orderBy("createdAt","desc")), snap => {
         vidList.innerHTML = "";
-        snap.forEach(d=>{
+        snap.forEach(d => {
           const x = d.data();
+          const title = escapeHtml(x.title);
+          const url = x.url || "";
           vidList.innerHTML += `
             <div class="list-item">
-              <span>${x.title}</span>
-              <a href="${x.url}" target="_blank" class="pill">Open</a>
-            </div>`;
+              <div><strong>${title}</strong></div>
+              <div><a href="${escapeHtml(url)}" target="_blank" class="pill">Open</a></div>
+            </div>
+          `;
         });
       });
 
-    }, 300);
+    }, 200);
 
     return;
   }
@@ -406,82 +393,102 @@ function loadSection(section) {
       const url = scriptDoc.exists() ? scriptDoc.data().url : null;
 
       main.innerHTML = `
-        <h1 class="section-title">Script</h1>
-        <p class="section-sub">Your show script.</p>
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Script</h2>
+            <p class="section-sub">Open the canonical script for the production.</p>
+          </div>
+        </div>
 
         <div class="card">
-          ${url ? `<a href="${url}" target="_blank" class="btn outline">Open Script</a>` : "No script uploaded yet."}
+          ${url ? `<a href="${escapeHtml(url)}" target="_blank" class="btn outline">Open Script</a>` : `<div class="small">No script uploaded yet.</div>`}
         </div>
       `;
-    }, 300);
+    }, 200);
 
     return;
   }
 
- /* -------------------------
-   CHAT
--------------------------- */
-if (section === "chat") {
-  showLoader();
+  /* -------------------------
+     CHAT
+  -------------------------- */
+  if (section === "chat") {
+    showLoader();
 
-  setTimeout(() => {
-    main.innerHTML = `
-      <h1 class="section-title">Chat</h1>
-      <p class="section-sub">Talk with your castmates.</p>
-
-      <div class="card">
-        <div id="chatList" class="list" style="max-height:400px; overflow:auto;"></div>
-
-        <div class="chat-box">
-          <input id="chatInput" placeholder="Type a message...">
-          <button id="chatSend">Send</button>
+    setTimeout(() => {
+      main.innerHTML = `
+        <div class="header-row">
+          <div>
+            <h2 class="section-title">Chat</h2>
+            <p class="section-sub">Talk with your castmates.</p>
+          </div>
         </div>
-      </div>
-    `;
 
-    const chatList = document.getElementById("chatList");
-    const chatInput = document.getElementById("chatInput");
-    const chatSend = document.getElementById("chatSend");
+        <div class="card">
+          <div id="chatList" class="list" style="max-height:420px; overflow:auto;"></div>
 
-    onSnapshot(query(collection(db,"chat"),orderBy("createdAt","asc")), snap=>{
-      chatList.innerHTML = "";
-      snap.forEach(d=>{
-        const x = d.data();
-        chatList.innerHTML += `
-          <div class="list-item">
-            <span><strong>${x.user}</strong>: ${x.text}</span>
-          </div>`;
+          <div class="chat-box">
+            <input id="chatInput" placeholder="Type a message...">
+            <button id="chatSend" class="btn"><span class="btn-text">Send</span></button>
+          </div>
+        </div>
+      `;
+
+      const chatList = document.getElementById("chatList");
+      const chatInput = document.getElementById("chatInput");
+      const chatSend = document.getElementById("chatSend");
+
+      onSnapshot(query(collection(db,"chat"), orderBy("createdAt","asc")), snap => {
+        chatList.innerHTML = "";
+        snap.forEach(d => {
+          const x = d.data();
+          const user = escapeHtml(x.user);
+          const text = escapeHtml(x.text);
+          chatList.innerHTML += `
+            <div class="list-item">
+              <div><strong>${user}</strong><div class="small">${text}</div></div>
+            </div>
+          `;
+        });
+
+        // Auto-scroll to bottom
+        chatList.scrollTop = chatList.scrollHeight;
       });
 
-      chatList.scrollTop = chatList.scrollHeight;
-    });
+      chatSend.onclick = async () => {
+        const text = chatInput.value.trim();
+        if (!text) return;
 
-    chatSend.onclick = async () => {
-      const text = chatInput.value.trim();
-      if (!text) return;
+        const user = auth.currentUser;
+        let username = "User";
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          username = userDoc.exists() ? (userDoc.data().email || username) : (user.email || username);
+        } catch (err) {
+          username = user.email || "User";
+        }
 
-      const user = auth.currentUser;
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const username = userDoc.exists() ? userDoc.data().email : "User";
+        await addDoc(collection(db, "chat"), {
+          user: username,
+          text,
+          createdAt: serverTimestamp()
+        });
 
-      await addDoc(collection(db, "chat"), {
-        user: username,
-        text,
-        createdAt: serverTimestamp()
+        chatInput.value = "";
+      };
+
+      chatInput.addEventListener("keypress", e => {
+        if (e.key === "Enter") chatSend.click();
       });
 
-      chatInput.value = "";
-    };
+    }, 200);
 
-    chatInput.addEventListener("keypress", e => {
-      if (e.key === "Enter") chatSend.click();
-    });
+    return;
+  }
 
-  }, 300);
-
-  return;
-}}
+  /* fallback */
+  main.innerHTML = `<div class="card"><div class="small">Select a section from the left.</div></div>`;
+}
 </script>
-
 </body>
 </html>
