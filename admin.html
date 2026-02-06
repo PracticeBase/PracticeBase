@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Admin · Platform</title>
+<title>Admin · Platform Console</title>
 
 <!-- Lucide icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -36,7 +36,7 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 
 /* SIDEBAR */
 .sidebar{
-  width:260px;
+  width:280px;
   background:var(--card);
   border-right:1px solid var(--border);
   padding:var(--space-4);
@@ -62,7 +62,7 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 .card{background:var(--card);border-radius:var(--radius-lg);padding:var(--space-4);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:var(--space-4)}
 
 /* GRID */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-4)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-4)}
 
 /* FORM */
 .field{margin-bottom:var(--space-3)}
@@ -86,8 +86,19 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 
 /* LISTS */
 .list{display:flex;flex-direction:column;gap:10px}
-.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .pill{padding:4px 8px;border-radius:999px;border:1px solid #000;font-size:0.8rem}
+
+/* CHAT */
+.chat-box{display:flex;gap:10px;margin-top:12px}
+.chat-box input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc}
+.chat-message { width:100%; display:flex; gap:12px; align-items:flex-start; }
+.chat-meta { font-size:0.85rem; color:var(--muted); margin-top:4px; }
+.chat-actions { display:flex; gap:8px; align-items:center; }
+
+/* EDIT UI */
+.msg-edit { display:flex; gap:8px; margin-top:8px; }
+.msg-edit input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
 
 /* STATUS */
 .status{margin-top:8px;color:#0a7a2f;font-size:0.9rem;min-height:1em}
@@ -100,28 +111,32 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 <div class="sidebar">
   <div class="logo">Admin Console</div>
 
-  <div class="nav-item active" data-section="add-announcement">
+  <div class="nav-item active" data-section="announcements">
     <i data-lucide="megaphone" class="nav-icon"></i> Add Announcement
   </div>
 
-  <div class="nav-item" data-section="add-rehearsal">
+  <div class="nav-item" data-section="rehearsal">
     <i data-lucide="calendar" class="nav-icon"></i> Add Rehearsal
   </div>
 
-  <div class="nav-item" data-section="add-track">
+  <div class="nav-item" data-section="track">
     <i data-lucide="music" class="nav-icon"></i> Add Track
   </div>
 
-  <div class="nav-item" data-section="add-video">
+  <div class="nav-item" data-section="video">
     <i data-lucide="video" class="nav-icon"></i> Add Video
   </div>
 
-  <div class="nav-item" data-section="add-script">
+  <div class="nav-item" data-section="script">
     <i data-lucide="file-text" class="nav-icon"></i> Add Script URL
   </div>
 
   <div class="nav-item" data-section="users">
     <i data-lucide="users" class="nav-icon"></i> Manage Users
+  </div>
+
+  <div class="nav-item" data-section="chat">
+    <i data-lucide="message-circle" class="nav-icon"></i> Chat Moderation
   </div>
 
   <div style="flex:1"></div>
@@ -135,20 +150,28 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 <div class="main" id="main"></div>
 
 <script type="module">
-/* ====== Firebase imports
-   Assumes ./firebase.js exports:
-   auth, db, onAuthStateChanged, signOut,
-   collection, addDoc, serverTimestamp,
-   doc, setDoc, getDoc, onSnapshot, query, orderBy, deleteDoc
+/*
+  admin.html
+  Assumes ./firebase.js exports:
+  auth, db, onAuthStateChanged, signOut,
+  collection, addDoc, serverTimestamp,
+  doc, setDoc, getDoc, onSnapshot, query, orderBy,
+  updateDoc, deleteDoc
 */
 import {
   auth, db, onAuthStateChanged, signOut,
   collection, addDoc, serverTimestamp,
-  doc, setDoc, getDoc, onSnapshot, query, orderBy, deleteDoc
+  doc, setDoc, getDoc, onSnapshot, query, orderBy,
+  updateDoc, deleteDoc
 } from "./firebase.js";
 
 /* INIT ICONS */
 lucide.createIcons();
+
+/* GLOBAL STATE */
+let currentUser = null;
+let currentUserEmail = null;
+let currentUserIsAdmin = false;
 
 /* AUTH CHECK */
 onAuthStateChanged(auth, async user => {
@@ -156,11 +179,20 @@ onAuthStateChanged(auth, async user => {
     window.location.href = "index";
     return;
   }
-  // Ensure user doc exists (optional)
-  const udoc = await getDoc(doc(db,"users",user.uid));
-  if (!udoc.exists()) {
-    // redirect or create minimal doc
-    await setDoc(doc(db,"users",user.uid), { email: user.email || "", role: "cast" });
+  currentUser = user;
+  currentUserEmail = user.email || null;
+
+  try {
+    const udoc = await getDoc(doc(db,"users",user.uid));
+    if (!udoc.exists()) {
+      await setDoc(doc(db,"users",user.uid), { email: user.email || "", role: "cast" });
+      currentUserIsAdmin = false;
+    } else {
+      currentUserIsAdmin = (udoc.data().role === "admin");
+    }
+  } catch (err) {
+    console.error("Error reading user doc:", err);
+    currentUserIsAdmin = false;
   }
 });
 
@@ -204,12 +236,40 @@ function stopLoading(btn){
   btn.disabled = false;
 }
 
+/* ESCAPE HTML helper */
+function escapeHtml(str){
+  if (str === undefined || str === null) return "";
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* NOTIFICATIONS */
+async function ensureNotificationPermission(){
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
+  try {
+    const p = await Notification.requestPermission();
+    return p === "granted";
+  } catch {
+    return false;
+  }
+}
+function showDeviceNotification(title, body){
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+  try {
+    new Notification(title, { body, silent: false });
+  } catch (e) {
+    console.warn("Notification failed", e);
+  }
+}
+
 /* INITIAL */
-renderSection("add-announcement");
+renderSection("announcements");
 
 /* RENDER SECTIONS */
 function renderSection(section){
-  if (section === "add-announcement") {
+  if (section === "announcements") {
     main.innerHTML = `
       <div class="header-row">
         <div>
@@ -235,15 +295,18 @@ function renderSection(section){
     annAddBtn.onclick = async () => {
       startLoading(annAddBtn);
       try {
+        const title = annTitle.value.trim();
+        const message = annMessage.value.trim();
+        if (!title || !message) throw new Error("Title and message required");
         await addDoc(collection(db,"announcements"), {
-          title: annTitle.value.trim(),
-          message: annMessage.value.trim(),
+          title,
+          message,
           createdAt: serverTimestamp()
         });
         annTitle.value = ""; annMessage.value = "";
         annStatus.textContent = "Announcement added.";
       } catch (err) {
-        annStatus.textContent = "Error adding announcement.";
+        annStatus.textContent = err.message || "Error adding announcement.";
         console.error(err);
       } finally {
         stopLoading(annAddBtn);
@@ -253,7 +316,7 @@ function renderSection(section){
     return;
   }
 
-  if (section === "add-rehearsal") {
+  if (section === "rehearsal") {
     main.innerHTML = `
       <div class="header-row">
         <div>
@@ -263,7 +326,7 @@ function renderSection(section){
       </div>
 
       <div class="card">
-        <div class="field"><label>Title</label><input id="schTitle" placeholder="Promo Film Dress Rehersal"></div>
+        <div class="field"><label>Title</label><input id="schTitle" placeholder="Promo Film Dress Rehearsal"></div>
         <div class="field"><label>Date (DD/MM/YYYY)</label><input id="schDate" placeholder="10/02/2026"></div>
         <div class="field"><label>Time</label><input id="schTime" placeholder="AfterSchool"></div>
         <div class="field"><label>Who</label><input id="schWho" placeholder="ALL CAST"></div>
@@ -286,10 +349,12 @@ function renderSection(section){
       startLoading(schAddBtn);
       try {
         const title = schTitle.value.trim();
-        const date = schDate.value.trim();           // "10/02/2026"
-        const time = schTime.value.trim();           // "AfterSchool"
-        const who = schWho.value.trim();             // "ALL CAST"
-        const extra = schExtra.value.trim();         // "Dress Run for Promo film"
+        const date = schDate.value.trim();
+        const time = schTime.value.trim();
+        const who = schWho.value.trim();
+        const extra = schExtra.value.trim();
+
+        if (!title || !date) throw new Error("Title and date required");
 
         // Validate date format DD/MM/YYYY
         const parts = date.split("/");
@@ -298,7 +363,7 @@ function renderSection(section){
         const d = parseInt(dStr,10), m = parseInt(mStr,10), y = parseInt(yStr,10);
         if (isNaN(d) || isNaN(m) || isNaN(y)) throw new Error("Invalid date");
 
-        // Create timestamp at midnight UTC for sorting (use local midnight if preferred)
+        // Create timestamp at midnight UTC for sorting
         const iso = `${y.toString().padStart(4,'0')}-${m.toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}T00:00:00Z`;
         const sortTimestamp = new Date(iso).getTime();
 
@@ -325,7 +390,7 @@ function renderSection(section){
     return;
   }
 
-  if (section === "add-track") {
+  if (section === "track") {
     main.innerHTML = `
       <div class="header-row">
         <div>
@@ -351,15 +416,18 @@ function renderSection(section){
     trkAddBtn.onclick = async () => {
       startLoading(trkAddBtn);
       try {
+        const title = trkTitle.value.trim();
+        const url = trkUrl.value.trim();
+        if (!title || !url) throw new Error("Title and URL required");
         await addDoc(collection(db,"tracks"), {
-          title: trkTitle.value.trim(),
-          url: trkUrl.value.trim(),
+          title,
+          url,
           createdAt: serverTimestamp()
         });
         trkTitle.value = ""; trkUrl.value = "";
         trkStatus.textContent = "Track added.";
       } catch (err) {
-        trkStatus.textContent = "Error adding track.";
+        trkStatus.textContent = err.message || "Error adding track.";
         console.error(err);
       } finally {
         stopLoading(trkAddBtn);
@@ -369,7 +437,7 @@ function renderSection(section){
     return;
   }
 
-  if (section === "add-video") {
+  if (section === "video") {
     main.innerHTML = `
       <div class="header-row">
         <div>
@@ -395,15 +463,18 @@ function renderSection(section){
     vidAddBtn.onclick = async () => {
       startLoading(vidAddBtn);
       try {
+        const title = vidTitle.value.trim();
+        const url = vidUrl.value.trim();
+        if (!title || !url) throw new Error("Title and URL required");
         await addDoc(collection(db,"videos"), {
-          title: vidTitle.value.trim(),
-          url: vidUrl.value.trim(),
+          title,
+          url,
           createdAt: serverTimestamp()
         });
         vidTitle.value = ""; vidUrl.value = "";
         vidStatus.textContent = "Video added.";
       } catch (err) {
-        vidStatus.textContent = "Error adding video.";
+        vidStatus.textContent = err.message || "Error adding video.";
         console.error(err);
       } finally {
         stopLoading(vidAddBtn);
@@ -413,7 +484,7 @@ function renderSection(section){
     return;
   }
 
-  if (section === "add-script") {
+  if (section === "script") {
     main.innerHTML = `
       <div class="header-row">
         <div>
@@ -437,11 +508,13 @@ function renderSection(section){
     scriptSaveBtn.onclick = async () => {
       startLoading(scriptSaveBtn);
       try {
-        await setDoc(doc(db,"settings","script"), { url: scriptUrl.value.trim() });
+        const url = scriptUrl.value.trim();
+        if (!url) throw new Error("URL required");
+        await setDoc(doc(db,"settings","script"), { url });
         scriptUrl.value = "";
         scriptStatus.textContent = "Script URL saved.";
       } catch (err) {
-        scriptStatus.textContent = "Error saving script.";
+        scriptStatus.textContent = err.message || "Error saving script.";
         console.error(err);
       } finally {
         stopLoading(scriptSaveBtn);
@@ -453,8 +526,6 @@ function renderSection(section){
 
   if (section === "users") {
     showLoader();
-
-    // small delay to show loader
     setTimeout(() => {
       main.innerHTML = `
         <div class="header-row">
@@ -471,19 +542,20 @@ function renderSection(section){
 
       const usersList = document.getElementById("usersList");
 
-      onSnapshot(collection(db,"users"), snap => {
+      onSnapshot(query(collection(db,"users"), orderBy("email","asc")), snap => {
         usersList.innerHTML = "";
         snap.forEach(docSnap => {
           const u = docSnap.data();
           const uid = docSnap.id;
-          const email = u.email || uid;
-          const role = u.role || "cast";
+          const email = escapeHtml(u.email || uid);
+          const role = escapeHtml(u.role || "cast");
 
           const item = document.createElement("div");
           item.className = "list-item";
           item.innerHTML = `
             <div>
-              <strong>${escapeHtml(email)}</strong><div class="small">${escapeHtml(role)}</div>
+              <strong>${email}</strong>
+              <div class="small">${role}</div>
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn outline" data-action="promote" data-uid="${uid}">Admin</button>
@@ -494,9 +566,8 @@ function renderSection(section){
           usersList.appendChild(item);
         });
 
-        // attach handlers (delegation)
         usersList.querySelectorAll("button[data-action]").forEach(btn => {
-          btn.onclick = async (e) => {
+          btn.onclick = async () => {
             const action = btn.dataset.action;
             const uid = btn.dataset.uid;
             try {
@@ -524,14 +595,166 @@ function renderSection(section){
     return;
   }
 
-  // default fallback
-  main.innerHTML = `<div class="card"><div class="small">Select an action from the left.</div></div>`;
-}
+  if (section === "chat") {
+    main.innerHTML = `
+      <div class="header-row">
+        <div>
+          <h2 class="section-title">Chat Moderation</h2>
+          <p class="section-sub">Everyone can post. Admins can edit or delete any message. Users can delete their own messages.</p>
+        </div>
+        <div>
+          <button id="notifyBtn" class="btn outline">Enable Notifications</button>
+        </div>
+      </div>
 
-/* small helper to avoid injecting raw HTML from data */
-function escapeHtml(str){
-  if (!str) return "";
-  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+      <div class="card">
+        <div id="chatList" class="list" style="max-height:520px; overflow:auto;"></div>
+
+        <div class="chat-box">
+          <input id="chatInput" placeholder="Type a message...">
+          <button id="chatSend" class="btn"><span class="btn-text">Send</span></button>
+        </div>
+      </div>
+    `;
+
+    const chatList = document.getElementById("chatList");
+    const chatInput = document.getElementById("chatInput");
+    const chatSend = document.getElementById("chatSend");
+    const notifyBtn = document.getElementById("notifyBtn");
+
+    notifyBtn.onclick = async () => {
+      const ok = await ensureNotificationPermission();
+      notifyBtn.textContent = ok ? "Notifications Enabled" : "Enable Notifications";
+    };
+
+    // Listen for chat and render with moderation controls
+    onSnapshot(query(collection(db,"chat"), orderBy("createdAt","asc")), snap => {
+      // show device notifications for new messages
+      snap.docChanges().forEach(change => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          const author = data.user || "Someone";
+          const text = data.text || "";
+          // notify if not from current user
+          if (currentUserEmail && data.user !== currentUserEmail) {
+            showDeviceNotification(`New message from ${author}`, text);
+          }
+        }
+      });
+
+      chatList.innerHTML = "";
+      snap.forEach(d => {
+        const x = d.data();
+        const id = d.id;
+        const user = escapeHtml(x.user);
+        const text = escapeHtml(x.text);
+        const ts = x.createdAt && x.createdAt.toDate ? x.createdAt.toDate().toLocaleString() : "";
+        const isOwner = (currentUserEmail && x.user === currentUserEmail);
+        const isAdmin = currentUserIsAdmin;
+
+        const actions = [];
+        if (isAdmin) actions.push(`<button class="btn outline" data-action="edit" data-id="${id}">Edit</button>`);
+        if (isAdmin || isOwner) actions.push(`<button class="btn outline" data-action="delete" data-id="${id}">Delete</button>`);
+
+        chatList.innerHTML += `
+          <div class="list-item" data-id="${id}">
+            <div class="chat-message">
+              <div style="min-width:160px;">
+                <strong>${user}</strong>
+                <div class="chat-meta">${ts}</div>
+              </div>
+              <div style="flex:1;">
+                <div class="msg-text" data-id="${id}">${text}</div>
+                <div class="msg-edit-area" data-id="${id}"></div>
+              </div>
+              <div class="chat-actions">
+                ${actions.join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // attach action handlers
+      chatList.querySelectorAll("button[data-action]").forEach(btn => {
+        btn.onclick = async () => {
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+          if (action === "delete") {
+            if (!confirm("Delete this message?")) return;
+            try {
+              await deleteDoc(doc(db,"chat",id));
+            } catch (err) {
+              console.error("Delete failed", err);
+              alert("Delete failed");
+            }
+          } else if (action === "edit") {
+            // admin inline edit
+            const container = chatList.querySelector(`.msg-edit-area[data-id="${id}"]`);
+            const msgTextEl = chatList.querySelector(`.msg-text[data-id="${id}"]`);
+            if (!container || !msgTextEl) return;
+            const currentText = msgTextEl.textContent || "";
+            container.innerHTML = `
+              <div class="msg-edit">
+                <input type="text" class="msg-edit-input" value="${escapeHtml(currentText)}">
+                <button class="btn outline save-edit" data-id="${id}">Save</button>
+                <button class="btn outline cancel-edit" data-id="${id}">Cancel</button>
+              </div>
+            `;
+            const saveBtn = container.querySelector(".save-edit");
+            const cancelBtn = container.querySelector(".cancel-edit");
+            const input = container.querySelector(".msg-edit-input");
+
+            cancelBtn.onclick = () => { container.innerHTML = ""; };
+            saveBtn.onclick = async () => {
+              const newText = input.value.trim();
+              if (!newText) { alert("Message cannot be empty"); return; }
+              try {
+                await updateDoc(doc(db,"chat",id), { text: newText });
+                container.innerHTML = "";
+              } catch (err) {
+                console.error("Update failed", err);
+                alert("Update failed");
+              }
+            };
+          }
+        };
+      });
+
+      // scroll to bottom
+      chatList.scrollTop = chatList.scrollHeight;
+    });
+
+    // send message
+    chatSend.onclick = async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      const username = currentUserEmail || "User";
+      try {
+        await addDoc(collection(db, "chat"), {
+          user: username,
+          text,
+          createdAt: serverTimestamp()
+        });
+        chatInput.value = "";
+      } catch (err) {
+        console.error("Send failed", err);
+        alert("Message failed to send");
+      }
+    };
+
+    chatInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") chatSend.click();
+    });
+
+    // request permission proactively (non-blocking)
+    ensureNotificationPermission();
+
+    return;
+  }
+
+  // fallback
+  main.innerHTML = `<div class="card"><div class="small">Select an action from the left.</div></div>`;
 }
 </script>
 </body>
