@@ -418,77 +418,69 @@ function loadSection(section) {
     return;
   }
 
-  /* -------------------------
-     CHAT
-  -------------------------- */
-  if (section === "chat") {
-    showLoader();
+ /* -------------------------
+   CHAT
+-------------------------- */
+if (section === "chat") {
+  showLoader();
 
-    setTimeout(() => {
-      main.innerHTML = `
-        <h1 class="section-title">Chat</h1>
-        <p class="section-sub">Talk with your castmates.</p>
+  setTimeout(() => {
+    main.innerHTML = `
+      <h1 class="section-title">Chat</h1>
+      <p class="section-sub">Talk with your castmates.</p>
 
-        <div class="card">
-          <div id="chatList" class="list" style="max-height:400px; overflow:auto;"></div>
+      <div class="card">
+        <div id="chatList" class="list" style="max-height:400px; overflow:auto;"></div>
 
-          <div class="chat-box">
-            <input id="chatInput" placeholder="Type a message...">
-            <button id="chatSend">Send</button>
-          </div>
+        <div class="chat-box">
+          <input id="chatInput" placeholder="Type a message...">
+          <button id="chatSend">Send</button>
         </div>
-      `;
+      </div>
+    `;
 
-      const chatList = document.getElementById("chatList");
-      const chatInput = document.getElementById("chatInput");
-      const chatSend = document.getElementById("chatSend");
+    const chatList = document.getElementById("chatList");
+    const chatInput = document.getElementById("chatInput");
+    const chatSend = document.getElementById("chatSend");
 
-      onSnapshot(query(collection(db,"chat"),orderBy("createdAt","asc")), snap=>{
-        chatList.innerHTML = "";
-        snap.forEach(d=>{
-          const x = d.data();
-          chatList.innerHTML += `<div class="list-item"><span>`
-
-        onSnapshot(query(collection(db,"chat"),orderBy("createdAt","asc")), snap=>{
-        chatList.innerHTML = "";
-        snap.forEach(d=>{
-          const x = d.data();
-          chatList.innerHTML += `
-            <div class="list-item">
-              <span><strong>${x.user}</strong>: ${x.text}</span>
-            </div>`;
-        });
-
-        // Auto-scroll to bottom
-        chatList.scrollTop = chatList.scrollHeight;
+    onSnapshot(query(collection(db,"chat"),orderBy("createdAt","asc")), snap=>{
+      chatList.innerHTML = "";
+      snap.forEach(d=>{
+        const x = d.data();
+        chatList.innerHTML += `
+          <div class="list-item">
+            <span><strong>${x.user}</strong>: ${x.text}</span>
+          </div>`;
       });
 
-      chatSend.onclick = async () => {
-        const text = chatInput.value.trim();
-        if (!text) return;
+      chatList.scrollTop = chatList.scrollHeight;
+    });
 
-        const user = auth.currentUser;
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const username = userDoc.exists() ? userDoc.data().email : "User";
+    chatSend.onclick = async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
 
-        await addDoc(collection(db, "chat"), {
-          user: username,
-          text,
-          createdAt: serverTimestamp()
-        });
+      const user = auth.currentUser;
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const username = userDoc.exists() ? userDoc.data().email : "User";
 
-        chatInput.value = "";
-      };
-
-      chatInput.addEventListener("keypress", e => {
-        if (e.key === "Enter") chatSend.click();
+      await addDoc(collection(db, "chat"), {
+        user: username,
+        text,
+        createdAt: serverTimestamp()
       });
 
-    }, 300);
+      chatInput.value = "";
+    };
 
-    return;
-  }
-}
+    chatInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") chatSend.click();
+    });
+
+  }, 300);
+
+  return;
+}}
 </script>
 
 </body>
