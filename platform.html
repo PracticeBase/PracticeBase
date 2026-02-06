@@ -86,12 +86,19 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 
 /* LISTS */
 .list{display:flex;flex-direction:column;gap:10px}
-.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .pill{padding:4px 8px;border-radius:999px;border:1px solid #000;font-size:0.8rem}
 
 /* CHAT */
 .chat-box{display:flex;gap:10px;margin-top:12px}
 .chat-box input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc}
+.chat-message { width:100%; display:flex; gap:12px; align-items:flex-start; }
+.chat-meta { font-size:0.85rem; color:var(--muted); margin-top:4px; }
+.chat-actions { display:flex; gap:8px; align-items:center; }
+
+/* EDIT UI */
+.msg-edit { display:flex; gap:8px; margin-top:8px; }
+.msg-edit input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
 
 /* STATUS */
 .status{margin-top:8px;color:#0a7a2f;font-size:0.9rem;min-height:1em}
@@ -143,16 +150,24 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
    Assumes ./firebase.js exports:
    auth, db, onAuthStateChanged, signOut,
    collection, addDoc, serverTimestamp,
-   doc, getDoc, onSnapshot, query, orderBy
+   doc, getDoc, onSnapshot, query, orderBy,
+   updateDoc, deleteDoc, setDoc
 */
 import {
   auth, db, onAuthStateChanged, signOut,
   collection, addDoc, serverTimestamp,
-  doc, getDoc, onSnapshot, query, orderBy
+  doc, getDoc, onSnapshot, query, orderBy,
+  updateDoc, deleteDoc, setDoc
 } from "./firebase.js";
 
 /* INIT ICONS */
 lucide.createIcons();
+
+/* GLOBAL STATE */
+let currentUser = null;
+let currentUserEmail = null;
+let currentUserIsAdmin = false;
+let lastSeenChatTimestamp = 0;
 
 /* AUTH CHECK */
 onAuthStateChanged(auth, async user => {
@@ -160,10 +175,21 @@ onAuthStateChanged(auth, async user => {
     window.location.href = "index";
     return;
   }
-  // Ensure user doc exists (optional)
-  const udoc = await getDoc(doc(db,"users",user.uid));
-  if (!udoc.exists()) {
-    await setDoc(doc(db,"users",user.uid), { email: user.email || "", role: "cast" });
+  currentUser = user;
+  currentUserEmail = user.email || null;
+
+  // Ensure user doc exists and read role
+  try {
+    const udoc = await getDoc(doc(db,"users",user.uid));
+    if (!udoc.exists()) {
+      await setDoc(doc(db,"users",user.uid), { email: user.email || "", role: "cast" });
+      currentUserIsAdmin = false;
+    } else {
+      currentUserIsAdmin = (udoc.data().role === "admin");
+    }
+  } catch (err) {
+    console.error("Error reading user doc:", err);
+    currentUserIsAdmin = false;
   }
 });
 
@@ -198,6 +224,28 @@ loadSection("announcements");
 function escapeHtml(str){
   if (!str) return "";
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* NOTIFICATIONS */
+async function ensureNotificationPermission(){
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
+  try {
+    const p = await Notification.requestPermission();
+    return p === "granted";
+  } catch {
+    return false;
+  }
+}
+function showDeviceNotification(title, body){
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+  try {
+    new Notification(title, { body, silent: false });
+  } catch (e) {
+    console.warn("Notification failed", e);
+  }
 }
 
 /* MAIN SECTION LOADER */
@@ -269,7 +317,6 @@ function loadSection(section) {
 
       const schList = document.getElementById("schList");
 
-      // Use sortTimestamp for reliable ordering
       onSnapshot(query(collection(db,"schedule"), orderBy("sortTimestamp","asc")), snap => {
         schList.innerHTML = "";
         snap.forEach(d => {
@@ -410,17 +457,22 @@ function loadSection(section) {
   }
 
   /* -------------------------
-     CHAT
+     CHAT (everyone)
+     - Everyone can read and create messages
+     - Admins see Edit + Delete controls
   -------------------------- */
   if (section === "chat") {
     showLoader();
 
-    setTimeout(() => {
+    setTimeout(async () => {
       main.innerHTML = `
         <div class="header-row">
           <div>
             <h2 class="section-title">Chat</h2>
-            <p class="section-sub">Talk with your castmates.</p>
+            <p class="section-sub">Talk with your castmates. Admins can edit or delete messages.</p>
+          </div>
+          <div>
+            <button id="notifyBtn" class="btn outline">Enable Notifications</button>
           </div>
         </div>
 
@@ -437,49 +489,140 @@ function loadSection(section) {
       const chatList = document.getElementById("chatList");
       const chatInput = document.getElementById("chatInput");
       const chatSend = document.getElementById("chatSend");
+      const notifyBtn = document.getElementById("notifyBtn");
 
+      // enable notifications on user action
+      notifyBtn.onclick = async () => {
+        const ok = await ensureNotificationPermission();
+        notifyBtn.textContent = ok ? "Notifications Enabled" : "Enable Notifications";
+      };
+
+      // track last seen timestamp to avoid duplicate notifications
+      lastSeenChatTimestamp = Date.now();
+
+      // listen for chat changes and show admin controls if current user is admin
       onSnapshot(query(collection(db,"chat"), orderBy("createdAt","asc")), snap => {
+        // handle doc changes for notifications
+        snap.docChanges().forEach(change => {
+          if (change.type === "added") {
+            const data = change.doc.data();
+            const ts = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : (data.createdAt || Date.now());
+            // notify only if newer than lastSeen and not from current user
+            if (ts > lastSeenChatTimestamp && data.user !== currentUserEmail) {
+              showDeviceNotification(`New message from ${data.user}`, data.text);
+            }
+          }
+        });
+
         chatList.innerHTML = "";
         snap.forEach(d => {
           const x = d.data();
+          const id = d.id;
           const user = escapeHtml(x.user);
           const text = escapeHtml(x.text);
+          const isOwner = (currentUserEmail && x.user === currentUserEmail);
+          const isAdmin = currentUserIsAdmin;
+
+          // message container
+          const actions = [];
+          if (isAdmin) actions.push(`<button class="btn outline" data-action="edit" data-id="${id}">Edit</button>`);
+          if (isAdmin || isOwner) actions.push(`<button class="btn outline" data-action="delete" data-id="${id}">Delete</button>`);
+
           chatList.innerHTML += `
-            <div class="list-item">
-              <div><strong>${user}</strong><div class="small">${text}</div></div>
+            <div class="list-item" data-id="${id}">
+              <div class="chat-message">
+                <div style="min-width:140px;">
+                  <strong>${user}</strong>
+                  <div class="chat-meta">${x.createdAt && x.createdAt.toDate ? x.createdAt.toDate().toLocaleString() : ""}</div>
+                </div>
+                <div style="flex:1;">
+                  <div class="msg-text" data-id="${id}">${text}</div>
+                  <div class="msg-edit-area" data-id="${id}"></div>
+                </div>
+                <div class="chat-actions">
+                  ${actions.join("")}
+                </div>
+              </div>
             </div>
           `;
         });
 
-        // Auto-scroll to bottom
+        // attach action handlers
+        chatList.querySelectorAll("button[data-action]").forEach(btn => {
+          btn.onclick = async (e) => {
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === "delete") {
+              if (!confirm("Delete this message?")) return;
+              try {
+                await deleteDoc(doc(db,"chat",id));
+              } catch (err) {
+                console.error("Delete failed", err);
+                alert("Delete failed");
+              }
+            } else if (action === "edit") {
+              // only admins should see this button; show inline edit UI
+              const container = chatList.querySelector(`.msg-edit-area[data-id="${id}"]`);
+              const msgTextEl = chatList.querySelector(`.msg-text[data-id="${id}"]`);
+              if (!container || !msgTextEl) return;
+              const currentText = msgTextEl.textContent || "";
+              container.innerHTML = `
+                <div class="msg-edit">
+                  <input type="text" class="msg-edit-input" value="${escapeHtml(currentText)}">
+                  <button class="btn outline save-edit" data-id="${id}">Save</button>
+                  <button class="btn outline cancel-edit" data-id="${id}">Cancel</button>
+                </div>
+              `;
+              const saveBtn = container.querySelector(".save-edit");
+              const cancelBtn = container.querySelector(".cancel-edit");
+              const input = container.querySelector(".msg-edit-input");
+
+              cancelBtn.onclick = () => { container.innerHTML = ""; };
+              saveBtn.onclick = async () => {
+                const newText = input.value.trim();
+                if (!newText) { alert("Message cannot be empty"); return; }
+                try {
+                  await updateDoc(doc(db,"chat",id), { text: newText });
+                  container.innerHTML = "";
+                } catch (err) {
+                  console.error("Update failed", err);
+                  alert("Update failed");
+                }
+              };
+            }
+          };
+        });
+
+        // update lastSeenChatTimestamp to now after rendering
+        lastSeenChatTimestamp = Date.now();
+        // scroll to bottom
         chatList.scrollTop = chatList.scrollHeight;
       });
 
+      // send message
       chatSend.onclick = async () => {
         const text = chatInput.value.trim();
         if (!text) return;
-
-        const user = auth.currentUser;
-        let username = "User";
+        const username = currentUserEmail || "User";
         try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          username = userDoc.exists() ? (userDoc.data().email || username) : (user.email || username);
+          await addDoc(collection(db, "chat"), {
+            user: username,
+            text,
+            createdAt: serverTimestamp()
+          });
+          chatInput.value = "";
         } catch (err) {
-          username = user.email || "User";
+          console.error("Send failed", err);
+          alert("Message failed to send");
         }
-
-        await addDoc(collection(db, "chat"), {
-          user: username,
-          text,
-          createdAt: serverTimestamp()
-        });
-
-        chatInput.value = "";
       };
 
       chatInput.addEventListener("keypress", e => {
         if (e.key === "Enter") chatSend.click();
       });
+
+      // prompt for notification permission once UI is ready
+      ensureNotificationPermission();
 
     }, 200);
 
