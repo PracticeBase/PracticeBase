@@ -21,14 +21,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAecPf2aXR0j1buuDmz9MVrS8aYINs1eCU",
-    authDomain: "grease-practicebase.firebaseapp.com",
-    projectId: "grease-practicebase",
-    storageBucket: "grease-practicebase.firebasestorage.app",
-    messagingSenderId: "696484090016",
-    appId: "1:696484090016:web:4d7bfe336d842ed946b9c5",
-    measurementId: "G-4C78RPXQ99"
-  };
+  apiKey: "AIzaSyArtEX7-LBDE5LLQajIwdMJuoDFJSd5eKw",
+  authDomain: "practicebase-8762h8b2.firebaseapp.com",
+  projectId: "practicebase-8762h8b2",
+  storageBucket: "practicebase-8762h8b2.firebasestorage.app",
+  messagingSenderId: "214656580811",
+  appId: "1:214656580811:web:ca51a9550c035215c9ef4e",
+  measurementId: "G-LGBLYT0FZS"
+};
 
 
 const app = initializeApp(firebaseConfig);
