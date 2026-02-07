@@ -1,409 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Admin · Platform Console</title>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
 
-<!-- Lucide icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Styles -->
+  <link rel="stylesheet" href="admin.css" />
 
-<style>
-/* GLOBAL RESET */
-*, *::before, *::after { box-sizing: border-box; }
-
-/* DESIGN SYSTEM */
-:root{
-  --bg:#f5f5f7;
-  --card:#fff;
-  --soft:#fafafa;
-  --text:#111;
-  --muted:#666;
-  --accent:#000;
-  --border:#ddd;
-  --radius-md:12px;
-  --radius-lg:16px;
-  --pill:999px;
-  --shadow:0 8px 20px rgba(0,0,0,0.06);
-  --space-2:8px;
-  --space-3:12px;
-  --space-4:16px;
-}
-
-/* LAYOUT */
-html,body{height:100%;margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-
-/* SIDEBAR */
-.sidebar{
-  width:280px;
-  background:var(--card);
-  border-right:1px solid var(--border);
-  padding:var(--space-4);
-  display:flex;
-  flex-direction:column;
-  gap:var(--space-3);
-}
-.logo{font-weight:700;font-size:1.15rem;margin-bottom:6px}
-.nav-item{
-  display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-md);cursor:pointer;font-weight:600;border:2px solid transparent;
-}
-.nav-item:hover{background:#f0f0f0}
-.nav-item.active{background:var(--soft);border-color:var(--accent)}
-.nav-icon{width:18px;height:18px}
-
-/* MAIN */
-.main{flex:1;overflow:auto;padding:var(--space-4)}
-.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.section-title{font-size:1.25rem;margin:0}
-.section-sub{margin:0;color:var(--muted);font-size:0.95rem}
-
-/* CARD */
-.card{background:var(--card);border-radius:var(--radius-lg);padding:var(--space-4);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:var(--space-4)}
-
-/* GRID */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-4)}
-
-/* FORM */
-.field{margin-bottom:var(--space-3)}
-.field label{display:block;font-size:0.8rem;margin-bottom:6px;color:var(--muted)}
-.field input,.field textarea{width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid #ccc;font-size:0.95rem;background:#fff}
-.field textarea{min-height:90px;resize:vertical}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--pill);background:var(--accent);color:#fff;border:2px solid var(--accent);cursor:pointer;font-weight:700}
-.btn.outline{background:#fff;color:#000}
-.btn:disabled{opacity:0.6;cursor:not-allowed}
-
-/* SPINNER */
-.spinner{width:16px;height:16px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
-.spinner.dark{border:3px solid rgba(0,0,0,0.15);border-top-color:#000}
-
-/* PAGE LOADER */
-.page-loader{width:40px;height:40px;border:4px solid #ccc;border-top-color:#000;border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
-
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* LISTS */
-.list{display:flex;flex-direction:column;gap:10px}
-.list-item{background:var(--soft);padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.pill{padding:4px 8px;border-radius:999px;border:1px solid #000;font-size:0.8rem}
-
-/* CHAT */
-.chat-box{display:flex;gap:10px;margin-top:12px}
-.chat-box input{flex:1;padding:10px;border-radius:10px;border:1px solid #ccc}
-.chat-message { width:100%; display:flex; gap:12px; align-items:flex-start; }
-.chat-meta { font-size:0.85rem; color:var(--muted); margin-top:4px; }
-.chat-actions { display:flex; gap:8px; align-items:center; }
-
-/* EDIT UI */
-.msg-edit { display:flex; gap:8px; margin-top:8px; }
-.msg-edit input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
-
-/* STATUS */
-.status{margin-top:8px;color:#0a7a2f;font-size:0.9rem;min-height:1em}
-.small{font-size:0.85rem;color:var(--muted)}
-</style>
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="logo">Admin Console</div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">Admin Dashboard</div>
 
-  <div class="nav-item active" data-section="announcements">
-    <i data-lucide="megaphone" class="nav-icon"></i> Add Announcement
+    <div class="nav-item active" data-section="announcements">
+      <i data-lucide="megaphone" class="nav-icon"></i> Announcements
+    </div>
+
+    <div class="nav-item" data-section="schedule">
+      <i data-lucide="calendar" class="nav-icon"></i> Schedule
+    </div>
+
+    <div class="nav-item" data-section="tracks">
+      <i data-lucide="music" class="nav-icon"></i> Tracks
+    </div>
+
+    <div class="nav-item" data-section="videos">
+      <i data-lucide="video" class="nav-icon"></i> Videos
+    </div>
+
+    <div class="nav-item" data-section="settings">
+      <i data-lucide="settings" class="nav-icon"></i> Settings
+    </div>
+
+    <div class="nav-item" data-section="users">
+      <i data-lucide="users" class="nav-icon"></i> Users
+    </div>
   </div>
 
-  <div class="nav-item" data-section="rehearsal">
-    <i data-lucide="calendar" class="nav-icon"></i> Add Rehearsal
+  <!-- MAIN -->
+  <div class="main">
+
+    <div id="status"></div>
+
+    <!-- ANNOUNCEMENTS -->
+    <section id="section-announcements" class="card">
+      <h2 class="section-title">Announcements</h2>
+      <form id="announcementForm">
+        <div class="field"><label>Title</label><input id="announcementTitle" required></div>
+        <div class="field"><label>Message</label><textarea id="announcementMessage" required></textarea></div>
+        <button class="btn">Create Announcement</button>
+      </form>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section id="section-schedule" class="card" style="display:none">
+      <h2 class="section-title">Schedule</h2>
+      <form id="scheduleForm">
+        <div class="field"><label>Title</label><input id="scheduleTitle" required></div>
+        <div class="field"><label>Date</label><input id="scheduleDate" required></div>
+        <div class="field"><label>Time</label><input id="scheduleTime"></div>
+        <div class="field"><label>Who</label><input id="scheduleWho"></div>
+        <div class="field"><label>Extra</label><input id="scheduleExtra"></div>
+        <button class="btn">Create Schedule Item</button>
+      </form>
+    </section>
+
+    <!-- TRACKS -->
+    <section id="section-tracks" class="card" style="display:none">
+      <h2 class="section-title">Tracks</h2>
+      <form id="trackForm">
+        <div class="field"><label>Title</label><input id="trackTitle" required></div>
+        <div class="field"><label>URL</label><input id="trackUrl" required></div>
+        <button class="btn">Create Track</button>
+      </form>
+    </section>
+
+    <!-- VIDEOS -->
+    <section id="section-videos" class="card" style="display:none">
+      <h2 class="section-title">Videos</h2>
+      <form id="videoForm">
+        <div class="field"><label>Title</label><input id="videoTitle" required></div>
+        <div class="field"><label>URL</label><input id="videoUrl" required></div>
+        <button class="btn">Create Video</button>
+      </form>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="section-settings" class="card" style="display:none">
+      <h2 class="section-title">Settings</h2>
+      <form id="settingsForm">
+        <div class="field"><label>Document ID</label><input id="settingsId"></div>
+        <div class="field"><label>Value</label><input id="settingsValue"></div>
+        <button class="btn">Save Setting</button>
+      </form>
+    </section>
+
+    <!-- USERS -->
+    <section id="section-users" class="card" style="display:none">
+      <h2 class="section-title">Users</h2>
+      <button id="refreshUsers" class="btn outline">Refresh Users</button>
+      <div id="usersList" class="list" style="margin-top:16px"></div>
+    </section>
+
   </div>
 
-  <div class="nav-item" data-section="track">
-    <i data-lucide="music" class="nav-icon"></i> Add Track
-  </div>
+  <!-- ADMIN LOGIC -->
+  <script type="module" src="admin.js"></script>
 
-  <div class="nav-item" data-section="video">
-    <i data-lucide="video" class="nav-icon"></i> Add Video
-  </div>
+  <script>
+    lucide.createIcons();
+  </script>
 
-  <div class="nav-item" data-section="script">
-    <i data-lucide="file-text" class="nav-icon"></i> Add Script URL
-  </div>
-
-  <div class="nav-item" data-section="users">
-    <i data-lucide="users" class="nav-icon"></i> Manage Users
-  </div>
-
-  <div class="nav-item" data-section="chat">
-    <i data-lucide="message-circle" class="nav-icon"></i> Chat Moderation
-  </div>
-
-  <div style="flex:1"></div>
-
-  <div class="nav-item" id="logoutBtn">
-    <i data-lucide="log-out" class="nav-icon"></i> Sign out
-  </div>
-</div>
-
-<!-- MAIN -->
-<div class="main" id="main"></div>
-
-<script type="module">
-// admin.js
-
-
-import { auth, db, app } from "/PracticeBase/firebase.js";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  limit
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-function $(id) { return document.getElementById(id); }
-
-function status(msg, type = "info") {
-  const box = $("status");
-  if (!box) return console.log(msg);
-  box.textContent = msg;
-  box.className = `status ${type}`;
-}
-
-function showAdmin(show) {
-  const panel = $("adminPanel");
-  if (panel) panel.style.display = show ? "block" : "none";
-}
-
-async function waitForAuth() {
-  return new Promise(resolve => {
-    const unsub = auth.onAuthStateChanged(u => {
-      unsub();
-      resolve(u);
-    });
-  });
-}
-
-async function isAdmin(uid) {
-  try {
-    const u = await getDoc(doc(db, "users", uid));
-    return u.exists() && u.data().role === "admin";
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
-}
-
-async function initAdmin() {
-  status("Checking authentication…");
-
-  await waitForAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    status("You must be signed in to access admin tools.", "error");
-    showAdmin(false);
-    return;
-  }
-
-  status(`Signed in as ${user.email}. Checking admin role…`);
-
-  const admin = await isAdmin(user.uid);
-  if (!admin) {
-    status("You are not an admin.", "error");
-    showAdmin(false);
-    return;
-  }
-
-  status("Admin verified.", "success");
-  showAdmin(true);
-  attachHandlers();
-  loadUsers();
-}
-
-/* --------------------------
-   CRUD FUNCTIONS
---------------------------- */
-
-async function createAnnouncement() {
-  try {
-    await addDoc(collection(db, "announcements"), {
-      title: $("announcementTitle").value.trim(),
-      message: $("announcementMessage").value.trim(),
-      createdAt: serverTimestamp()
-    });
-    status("Announcement created.", "success");
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-async function createSchedule() {
-  try {
-    await addDoc(collection(db, "schedule"), {
-      title: $("scheduleTitle").value.trim(),
-      date: $("scheduleDate").value.trim(),
-      time: $("scheduleTime").value.trim(),
-      who: $("scheduleWho").value.trim(),
-      extra: $("scheduleExtra").value.trim(),
-      sortTimestamp: Date.now(),
-      createdAt: serverTimestamp()
-    });
-    status("Schedule item created.", "success");
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-async function createTrack() {
-  try {
-    await addDoc(collection(db, "tracks"), {
-      title: $("trackTitle").value.trim(),
-      url: $("trackUrl").value.trim(),
-      createdAt: serverTimestamp()
-    });
-    status("Track created.", "success");
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-async function createVideo() {
-  try {
-    await addDoc(collection(db, "videos"), {
-      title: $("videoTitle").value.trim(),
-      url: $("videoUrl").value.trim(),
-      createdAt: serverTimestamp()
-    });
-    status("Video created.", "success");
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-async function saveSetting() {
-  try {
-    const id = $("settingsId").value.trim() || "default";
-    await updateDoc(doc(db, "settings", id), {
-      value: $("settingsValue").value.trim()
-    });
-    status("Setting saved.", "success");
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-/* --------------------------
-   USERS
---------------------------- */
-
-async function loadUsers() {
-  const box = $("usersList");
-  if (!box) return;
-
-  box.textContent = "Loading…";
-
-  try {
-    const q = query(collection(db, "users"), orderBy("__name__"), limit(100));
-    const snap = await getDocs(q);
-
-    box.innerHTML = "";
-
-    snap.forEach(d => {
-      const u = d.data();
-      const row = document.createElement("div");
-      row.className = "userRow";
-      row.innerHTML = `
-        <strong>${d.id}</strong> — ${u.email || ""} — <em>${u.role || ""}</em>
-        <button class="promote" data-uid="${d.id}">Admin</button>
-        <button class="demote" data-uid="${d.id}">Member</button>
-        <button class="delete" data-uid="${d.id}">Delete</button>
-      `;
-      box.appendChild(row);
-    });
-
-    box.querySelectorAll(".promote").forEach(btn =>
-      btn.onclick = () => updateUserRole(btn.dataset.uid, "admin")
-    );
-    box.querySelectorAll(".demote").forEach(btn =>
-      btn.onclick = () => updateUserRole(btn.dataset.uid, "member")
-    );
-    box.querySelectorAll(".delete").forEach(btn =>
-      btn.onclick = () => deleteUser(btn.dataset.uid)
-    );
-
-  } catch (e) {
-    status("Failed to load users: " + e.message, "error");
-  }
-}
-
-async function updateUserRole(uid, role) {
-  try {
-    await updateDoc(doc(db, "users", uid), { role });
-    status(`Updated ${uid} to ${role}.`, "success");
-    loadUsers();
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-async function deleteUser(uid) {
-  if (!confirm(`Delete users/${uid}?`)) return;
-  try {
-    await deleteDoc(doc(db, "users", uid));
-    status("User deleted.", "success");
-    loadUsers();
-  } catch (e) {
-    status("Failed: " + e.message, "error");
-  }
-}
-
-/* --------------------------
-   EVENT HANDLERS
---------------------------- */
-
-function attachHandlers() {
-  $("announcementForm")?.addEventListener("submit", e => {
-    e.preventDefault();
-    createAnnouncement();
-  });
-
-  $("scheduleForm")?.addEventListener("submit", e => {
-    e.preventDefault();
-    createSchedule();
-  });
-
-  $("trackForm")?.addEventListener("submit", e => {
-    e.preventDefault();
-    createTrack();
-  });
-
-  $("videoForm")?.addEventListener("submit", e => {
-    e.preventDefault();
-    createVideo();
-  });
-
-  $("settingsForm")?.addEventListener("submit", e => {
-    e.preventDefault();
-    saveSetting();
-  });
-
-  $("refreshUsers")?.addEventListener("click", loadUsers);
-}
-
-/* --------------------------
-   START
---------------------------- */
-
-document.addEventListener("DOMContentLoaded", initAdmin);
-
-</script>
 </body>
 </html>
