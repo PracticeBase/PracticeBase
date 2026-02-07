@@ -152,19 +152,13 @@ body{display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:h
 <script type="module">
 // admin.js
 
-//
-// Requirements:
-// - /firebase.js must export: auth, db, app, onAuthStateChanged
-// - HTML must include elements with IDs used below (status, adminPanel, forms/buttons)
-// - Adjust collection names or field validation to match your Firestore schema
 
-import { auth, db, app, onAuthStateChanged } from '/firebase.js';
+import { auth, db, app } from "firebase.js";
 import {
   collection,
   addDoc,
   serverTimestamp,
   doc,
-  setDoc,
   getDoc,
   getDocs,
   updateDoc,
@@ -174,323 +168,241 @@ import {
   limit
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-/* -------------------------
-   Helper UI functions
-   ------------------------- */
-function el(id) { return document.getElementById(id); }
+function $(id) { return document.getElementById(id); }
 
-function showStatus(msg, type = 'info') {
-  const s = el('status');
-  if (!s) return console[type === 'error' ? 'error' : 'log'](msg);
-  s.textContent = msg;
-  s.className = `status ${type}`;
+function status(msg, type = "info") {
+  const box = $("status");
+  if (!box) return console.log(msg);
+  box.textContent = msg;
+  box.className = `status ${type}`;
 }
 
-function showAdminPanel(show) {
-  const panel = el('adminPanel');
-  if (!panel) return;
-  panel.style.display = show ? 'block' : 'none';
+function showAdmin(show) {
+  const panel = $("adminPanel");
+  if (panel) panel.style.display = show ? "block" : "none";
 }
 
-/* -------------------------
-   Auth and admin check
-   ------------------------- */
-async function isAdminUser(uid) {
+async function waitForAuth() {
+  return new Promise(resolve => {
+    const unsub = auth.onAuthStateChanged(u => {
+      unsub();
+      resolve(u);
+    });
+  });
+}
+
+async function isAdmin(uid) {
   try {
-    const udoc = await getDoc(doc(db, 'users', uid));
-    return udoc.exists() && udoc.data().role === 'admin';
-  } catch (err) {
-    console.error('isAdminUser error', err);
+    const u = await getDoc(doc(db, "users", uid));
+    return u.exists() && u.data().role === "admin";
+  } catch (e) {
+    console.error(e);
     return false;
   }
 }
 
-async function waitForAuthAndInit() {
-  // Wait for auth state to initialize
-  await new Promise(resolve => {
-    const unsub = onAuthStateChanged(auth, user => {
-      unsub();
-      resolve(user);
-    });
-  });
+async function initAdmin() {
+  status("Checking authentication…");
 
+  await waitForAuth();
   const user = auth.currentUser;
+
   if (!user) {
-    showStatus('Not signed in. Please sign in to access admin features.', 'error');
-    showAdminPanel(false);
+    status("You must be signed in to access admin tools.", "error");
+    showAdmin(false);
     return;
   }
 
-  showStatus(`Signed in as ${user.email} (uid: ${user.uid}). Checking admin role...`, 'info');
+  status(`Signed in as ${user.email}. Checking admin role…`);
 
-  const admin = await isAdminUser(user.uid);
+  const admin = await isAdmin(user.uid);
   if (!admin) {
-    showStatus('You are not an admin. Admin features are disabled for this account.', 'error');
-    showAdminPanel(false);
+    status("You are not an admin.", "error");
+    showAdmin(false);
     return;
   }
 
-  showStatus('Admin verified. You may manage content.', 'success');
-  showAdminPanel(true);
-  attachEventHandlers();
-  await loadInitialData();
+  status("Admin verified.", "success");
+  showAdmin(true);
+  attachHandlers();
+  loadUsers();
 }
 
-/* -------------------------
-   CRUD operations (admin)
-   ------------------------- */
+/* --------------------------
+   CRUD FUNCTIONS
+--------------------------- */
 
-// Announcements
-async function createAnnouncement(title, message) {
+async function createAnnouncement() {
   try {
-    await addDoc(collection(db, 'announcements'), {
-      title: String(title || '').trim(),
-      message: String(message || '').trim(),
+    await addDoc(collection(db, "announcements"), {
+      title: $("announcementTitle").value.trim(),
+      message: $("announcementMessage").value.trim(),
       createdAt: serverTimestamp()
     });
-    showStatus('Announcement created.', 'success');
-  } catch (err) {
-    console.error('createAnnouncement error', err);
-    showStatus(`Failed to create announcement: ${err.message}`, 'error');
+    status("Announcement created.", "success");
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-// Schedule
-async function createScheduleItem(data) {
+async function createSchedule() {
   try {
-    // data: { title, date, time?, who?, extra? }
-    await addDoc(collection(db, 'schedule'), {
-      title: String(data.title || '').trim(),
-      date: String(data.date || '').trim(),
-      time: data.time ? String(data.time) : null,
-      who: data.who ? String(data.who) : null,
-      extra: data.extra ? String(data.extra) : null,
+    await addDoc(collection(db, "schedule"), {
+      title: $("scheduleTitle").value.trim(),
+      date: $("scheduleDate").value.trim(),
+      time: $("scheduleTime").value.trim(),
+      who: $("scheduleWho").value.trim(),
+      extra: $("scheduleExtra").value.trim(),
       sortTimestamp: Date.now(),
       createdAt: serverTimestamp()
     });
-    showStatus('Schedule item created.', 'success');
-  } catch (err) {
-    console.error('createScheduleItem error', err);
-    showStatus(`Failed to create schedule item: ${err.message}`, 'error');
+    status("Schedule item created.", "success");
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-// Tracks
-async function createTrack(title, url) {
+async function createTrack() {
   try {
-    await addDoc(collection(db, 'tracks'), {
-      title: String(title || '').trim(),
-      url: String(url || '').trim(),
+    await addDoc(collection(db, "tracks"), {
+      title: $("trackTitle").value.trim(),
+      url: $("trackUrl").value.trim(),
       createdAt: serverTimestamp()
     });
-    showStatus('Track created.', 'success');
-  } catch (err) {
-    console.error('createTrack error', err);
-    showStatus(`Failed to create track: ${err.message}`, 'error');
+    status("Track created.", "success");
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-// Videos
-async function createVideo(title, url) {
+async function createVideo() {
   try {
-    await addDoc(collection(db, 'videos'), {
-      title: String(title || '').trim(),
-      url: String(url || '').trim(),
+    await addDoc(collection(db, "videos"), {
+      title: $("videoTitle").value.trim(),
+      url: $("videoUrl").value.trim(),
       createdAt: serverTimestamp()
     });
-    showStatus('Video created.', 'success');
-  } catch (err) {
-    console.error('createVideo error', err);
-    showStatus(`Failed to create video: ${err.message}`, 'error');
+    status("Video created.", "success");
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-// Settings (single doc)
-async function setSetting(docId, data) {
+async function saveSetting() {
   try {
-    await setDoc(doc(db, 'settings', docId), data, { merge: true });
-    showStatus(`Setting ${docId} saved.`, 'success');
-  } catch (err) {
-    console.error('setSetting error', err);
-    showStatus(`Failed to save setting: ${err.message}`, 'error');
+    const id = $("settingsId").value.trim() || "default";
+    await updateDoc(doc(db, "settings", id), {
+      value: $("settingsValue").value.trim()
+    });
+    status("Setting saved.", "success");
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-/* -------------------------
-   Users management (admin)
-   ------------------------- */
+/* --------------------------
+   USERS
+--------------------------- */
 
-async function listUsers(limitCount = 50) {
+async function loadUsers() {
+  const box = $("usersList");
+  if (!box) return;
+
+  box.textContent = "Loading…";
+
   try {
-    const q = query(collection(db, 'users'), orderBy('__name__'), limit(limitCount));
+    const q = query(collection(db, "users"), orderBy("__name__"), limit(100));
     const snap = await getDocs(q);
-    const users = [];
-    snap.forEach(d => users.push({ id: d.id, ...d.data() }));
-    return users;
-  } catch (err) {
-    console.error('listUsers error', err);
-    showStatus(`Failed to list users: ${err.message}`, 'error');
-    return [];
+
+    box.innerHTML = "";
+
+    snap.forEach(d => {
+      const u = d.data();
+      const row = document.createElement("div");
+      row.className = "userRow";
+      row.innerHTML = `
+        <strong>${d.id}</strong> — ${u.email || ""} — <em>${u.role || ""}</em>
+        <button class="promote" data-uid="${d.id}">Admin</button>
+        <button class="demote" data-uid="${d.id}">Member</button>
+        <button class="delete" data-uid="${d.id}">Delete</button>
+      `;
+      box.appendChild(row);
+    });
+
+    box.querySelectorAll(".promote").forEach(btn =>
+      btn.onclick = () => updateUserRole(btn.dataset.uid, "admin")
+    );
+    box.querySelectorAll(".demote").forEach(btn =>
+      btn.onclick = () => updateUserRole(btn.dataset.uid, "member")
+    );
+    box.querySelectorAll(".delete").forEach(btn =>
+      btn.onclick = () => deleteUser(btn.dataset.uid)
+    );
+
+  } catch (e) {
+    status("Failed to load users: " + e.message, "error");
   }
 }
 
 async function updateUserRole(uid, role) {
   try {
-    await updateDoc(doc(db, 'users', uid), { role });
-    showStatus(`Updated role for ${uid} to ${role}`, 'success');
-  } catch (err) {
-    console.error('updateUserRole error', err);
-    showStatus(`Failed to update user role: ${err.message}`, 'error');
+    await updateDoc(doc(db, "users", uid), { role });
+    status(`Updated ${uid} to ${role}.`, "success");
+    loadUsers();
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-async function deleteUserDoc(uid) {
+async function deleteUser(uid) {
+  if (!confirm(`Delete users/${uid}?`)) return;
   try {
-    await deleteDoc(doc(db, 'users', uid));
-    showStatus(`Deleted users/${uid}`, 'success');
-  } catch (err) {
-    console.error('deleteUserDoc error', err);
-    showStatus(`Failed to delete user doc: ${err.message}`, 'error');
+    await deleteDoc(doc(db, "users", uid));
+    status("User deleted.", "success");
+    loadUsers();
+  } catch (e) {
+    status("Failed: " + e.message, "error");
   }
 }
 
-/* -------------------------
-   UI wiring and initial load
-   ------------------------- */
+/* --------------------------
+   EVENT HANDLERS
+--------------------------- */
 
-function attachEventHandlers() {
-  // Announcement form
-  const annForm = el('announcementForm');
-  if (annForm) {
-    annForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const title = el('announcementTitle').value;
-      const message = el('announcementMessage').value;
-      await createAnnouncement(title, message);
-      annForm.reset();
-      await refreshUsersListIfVisible();
-    });
-  }
+function attachHandlers() {
+  $("announcementForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    createAnnouncement();
+  });
 
-  // Schedule form
-  const schedForm = el('scheduleForm');
-  if (schedForm) {
-    schedForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = {
-        title: el('scheduleTitle').value,
-        date: el('scheduleDate').value,
-        time: el('scheduleTime').value,
-        who: el('scheduleWho').value,
-        extra: el('scheduleExtra').value
-      };
-      await createScheduleItem(data);
-      schedForm.reset();
-    });
-  }
+  $("scheduleForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    createSchedule();
+  });
 
-  // Track form
-  const trackForm = el('trackForm');
-  if (trackForm) {
-    trackForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      await createTrack(el('trackTitle').value, el('trackUrl').value);
-      trackForm.reset();
-    });
-  }
+  $("trackForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    createTrack();
+  });
 
-  // Video form
-  const videoForm = el('videoForm');
-  if (videoForm) {
-    videoForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      await createVideo(el('videoTitle').value, el('videoUrl').value);
-      videoForm.reset();
-    });
-  }
+  $("videoForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    createVideo();
+  });
 
-  // Settings form
-  const settingsForm = el('settingsForm');
-  if (settingsForm) {
-    settingsForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = el('settingsId').value || 'default';
-      const data = { value: el('settingsValue').value };
-      await setSetting(id, data);
-      settingsForm.reset();
-    });
-  }
+  $("settingsForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    saveSetting();
+  });
 
-  // Refresh users button
-  const refreshUsersBtn = el('refreshUsers');
-  if (refreshUsersBtn) {
-    refreshUsersBtn.addEventListener('click', refreshUsersListIfVisible);
-  }
+  $("refreshUsers")?.addEventListener("click", loadUsers);
 }
 
-async function loadInitialData() {
-  // Optionally populate users list if the UI has a container
-  await refreshUsersListIfVisible();
-}
+/* --------------------------
+   START
+--------------------------- */
 
-async function refreshUsersListIfVisible() {
-  const container = el('usersList');
-  if (!container) return;
-  container.innerHTML = 'Loading users...';
-  const users = await listUsers(200);
-  container.innerHTML = '';
-  if (!users.length) {
-    container.textContent = 'No users found.';
-    return;
-  }
-  users.forEach(u => {
-    const row = document.createElement('div');
-    row.className = 'userRow';
-    row.innerHTML = `
-      <strong>${u.id}</strong> &nbsp; ${u.email || ''} &nbsp; <em>${u.role || ''}</em>
-      <button data-uid="${u.id}" class="promoteBtn">Make admin</button>
-      <button data-uid="${u.id}" class="demoteBtn">Demote</button>
-      <button data-uid="${u.id}" class="deleteBtn">Delete doc</button>
-    `;
-    container.appendChild(row);
-  });
-
-  // Attach handlers
-  container.querySelectorAll('.promoteBtn').forEach(b => {
-    b.addEventListener('click', async e => {
-      const uid = e.currentTarget.dataset.uid;
-      await updateUserRole(uid, 'admin');
-      await refreshUsersListIfVisible();
-    });
-  });
-  container.querySelectorAll('.demoteBtn').forEach(b => {
-    b.addEventListener('click', async e => {
-      const uid = e.currentTarget.dataset.uid;
-      await updateUserRole(uid, 'member');
-      await refreshUsersListIfVisible();
-    });
-  });
-  container.querySelectorAll('.deleteBtn').forEach(b => {
-    b.addEventListener('click', async e => {
-      const uid = e.currentTarget.dataset.uid;
-      if (!confirm(`Delete users/${uid} document? This cannot be undone from the client.`)) return;
-      await deleteUserDoc(uid);
-      await refreshUsersListIfVisible();
-    });
-  });
-}
-
-/* -------------------------
-   Initialize on load
-   ------------------------- */
-document.addEventListener('DOMContentLoaded', () => {
-  showAdminPanel(false);
-  showStatus('Initializing admin console...', 'info');
-  waitForAuthAndInit().catch(err => {
-    console.error('Initialization error', err);
-    showStatus('Initialization failed: ' + (err.message || err), 'error');
-  });
-});
+document.addEventListener("DOMContentLoaded", initAdmin);
 
 </script>
 </body>
