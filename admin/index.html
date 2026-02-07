@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <title>Admin Dashboard</title>
 
-  <!-- Styles -->
   <link rel="stylesheet" href="admin.css" />
-
-  <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
@@ -40,12 +37,16 @@
     <div class="nav-item" data-section="users">
       <i data-lucide="users" class="nav-icon"></i> Users
     </div>
+
+    <div class="sidebar-footer">
+      <button id="signOutBtn" class="btn outline full-width">
+        <i data-lucide="log-out" class="nav-icon"></i> Sign out
+      </button>
+    </div>
   </div>
 
   <!-- MAIN -->
   <div class="main">
-
-    <div id="status"></div>
 
     <!-- ANNOUNCEMENTS -->
     <section id="section-announcements" class="card">
@@ -53,8 +54,9 @@
       <form id="announcementForm">
         <div class="field"><label>Title</label><input id="announcementTitle" required></div>
         <div class="field"><label>Message</label><textarea id="announcementMessage" required></textarea></div>
-        <button class="btn">Create Announcement</button>
+        <button class="btn" type="submit">Save Announcement</button>
       </form>
+      <div class="list" id="announcementsList"></div>
     </section>
 
     <!-- SCHEDULE -->
@@ -66,8 +68,9 @@
         <div class="field"><label>Time</label><input id="scheduleTime"></div>
         <div class="field"><label>Who</label><input id="scheduleWho"></div>
         <div class="field"><label>Extra</label><input id="scheduleExtra"></div>
-        <button class="btn">Create Schedule Item</button>
+        <button class="btn" type="submit">Save Schedule Item</button>
       </form>
+      <div class="list" id="scheduleList"></div>
     </section>
 
     <!-- TRACKS -->
@@ -76,8 +79,9 @@
       <form id="trackForm">
         <div class="field"><label>Title</label><input id="trackTitle" required></div>
         <div class="field"><label>URL</label><input id="trackUrl" required></div>
-        <button class="btn">Create Track</button>
+        <button class="btn" type="submit">Save Track</button>
       </form>
+      <div class="list" id="tracksList"></div>
     </section>
 
     <!-- VIDEOS -->
@@ -86,8 +90,9 @@
       <form id="videoForm">
         <div class="field"><label>Title</label><input id="videoTitle" required></div>
         <div class="field"><label>URL</label><input id="videoUrl" required></div>
-        <button class="btn">Create Video</button>
+        <button class="btn" type="submit">Save Video</button>
       </form>
+      <div class="list" id="videosList"></div>
     </section>
 
     <!-- SETTINGS -->
@@ -96,7 +101,7 @@
       <form id="settingsForm">
         <div class="field"><label>Document ID</label><input id="settingsId"></div>
         <div class="field"><label>Value</label><input id="settingsValue"></div>
-        <button class="btn">Save Setting</button>
+        <button class="btn" type="submit">Save Setting</button>
       </form>
     </section>
 
@@ -109,12 +114,12 @@
 
   </div>
 
-  <!-- ADMIN LOGIC -->
-  <script type="module" src="admin.js"></script>
+  <!-- STATUS BAR -->
+  <div id="status" class="status-bar"></div>
 
+  <script type="module" src="admin.js"></script>
   <script>
     lucide.createIcons();
   </script>
-
 </body>
 </html>
