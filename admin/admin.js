@@ -519,7 +519,7 @@ function setupSignOut() {
     await signOut(auth);
     status("Signed out.", "info");
     setTimeout(() => {
-      window.location.reload();
+      window.location.href = "/PracticeBase";
     }, 500);
   };
 }
