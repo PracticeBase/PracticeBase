@@ -102,6 +102,7 @@ body{
   opacity:0;
   transform:translateX(20px);
   transition:opacity 0.35s ease,transform 0.35s ease;
+  padding-bottom: 120px;
 }
 .screen.active{
   opacity:1;
