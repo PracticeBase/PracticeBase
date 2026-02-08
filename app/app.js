@@ -197,3 +197,58 @@ onAuthStateChanged(auth, user => {
     show("loginScreen");
   }
 });
+
+/* ---------------------------
+   PWA INSTALL PROMPT (MOBILE ONLY)
+---------------------------- */
+
+let deferredPrompt = null;
+
+// Detect mobile
+function isMobile() {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+// Listen for install prompt event
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Stop automatic browser prompt
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Only show install UI on mobile
+  if (isMobile()) {
+    showInstallBanner();
+  }
+});
+
+// Show a custom install banner
+function showInstallBanner() {
+  const banner = document.createElement("div");
+  banner.className = "install-banner";
+  banner.innerHTML = `
+    <div class="install-content">
+      <strong>Install PracticeBase?</strong>
+      <button id="installBtn" class="btn small">Install</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  $("installBtn").onclick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+
+    if (result.outcome === "accepted") {
+      status("App installed.");
+    }
+
+    banner.remove();
+    deferredPrompt = null;
+  };
+}
+
+// Hide banner if already installed
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+});
